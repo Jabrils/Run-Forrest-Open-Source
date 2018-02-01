@@ -53,7 +53,7 @@ public class menuParams : MonoBehaviour {
     {
         if (!GameObject.Find("menuParams"))
         {
-            SceneManager.LoadScene("splash");
+            SceneManager.LoadScene("coursebuilder");
         }
     }
 
