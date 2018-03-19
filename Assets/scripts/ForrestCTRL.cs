@@ -6,23 +6,23 @@ using NeuralNet;
 
 [RequireComponent(typeof(Rigidbody))]
 public class ForrestCTRL : MonoBehaviour {
-    ctrl C;
-    Rigidbody rb;
-    Collider col;
-    public NN nn = new NN(5,4);
+    protected ctrl C;
+    protected Rigidbody rb;
+    protected Collider col;
+    protected float[] ini;
+    protected bool menu;
+
+    public NN nn;
     public string myName;
     public float movement;
     public float fitness;
-    float[] ini;
     public bool ended, stLap;
     public Vector2 lap;
     public float[] inp;
     public string brain;
 
-    bool menu;
-
     // Use this for initialization
-    void Start() {
+	virtual protected void Start() {
         menu = SceneManager.GetActiveScene().name == "menu";
 
         if (!menu)
@@ -177,7 +177,7 @@ public class ForrestCTRL : MonoBehaviour {
         }
     }
 
-    public void Reset()
+	virtual public void Reset()
     {
         fitness = 0;
         lap.x = 1;
@@ -193,7 +193,7 @@ public class ForrestCTRL : MonoBehaviour {
         }
     }
 
-    void CheckIfLast()
+    protected void CheckIfLast()
     {
         // Grab a ref to every Active Forrest
         GameObject[] f = GameObject.FindGameObjectsWithTag("Active");
@@ -223,7 +223,7 @@ public class ForrestCTRL : MonoBehaviour {
             r.material = Resources.Load<Material>("forrest_full 1");
         }
 
-        nn.SetFitness(fitness);
+		nn.SetFitness(fitness);
 
         // Remove self from All Forrest Attempts Controller Listings
         C.allFatt.Remove(this);
