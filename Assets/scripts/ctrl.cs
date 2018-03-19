@@ -44,6 +44,8 @@ public class ctrl : MonoBehaviour {
     Image[] aRs;
     menuParams mP;
 
+	public int[] brainConfig = new int[] { 5, 4, 1 };
+
     // 1, 2, 3, 4, 5
     GameObject[] graphs = new GameObject[2];
     int graphWidth = 860;
@@ -151,7 +153,8 @@ public class ctrl : MonoBehaviour {
         // then every brian will hold 29 values, in our case floats, so we'll loop through every brain & set their value size to hold 29 floats, which will be a fully randomized brain
         for (int i = 0; i < attIniData.Length; i++)
         {
-            attIniData[i] = new float[29];
+            //attIniData[i] = new float[33];
+			attIniData[i] = new float[NN.GetGeneSize(brainConfig[0],brainConfig[1],brainConfig[2])];
         }
 
         // 
@@ -455,18 +458,18 @@ public class ctrl : MonoBehaviour {
                 // Set the brain to the corresponding attention ini data
                 if (mode == GameMode.Train)
                 {
-                    f.SetBrain(attIniData[i]);
+					f.SetBrain(brainConfig,attIniData[i]);
                 }
                 else if (mode == GameMode.Test)
                 {
-                    f.SetBrain(attIniData[i], mP.brains[i].Split('\n')[0]);
+					f.SetBrain(brainConfig,attIniData[i], mP.brains[i].Split('\n')[0]);
                 }
                 else if (mode == GameMode.Campaign)
                 {
                     string name = mP.campNN.Split('\n')[0];
                     string pass = mP.campNN.Split('\n')[1];
 
-                    f.SetBrain(ParseBrain1(pass, 29), name);
+					f.SetBrain(brainConfig,ParseBrain1(pass, NN.GetGeneSize(brainConfig[0],brainConfig[1],brainConfig[2])), name);
                 }
 
                 // Add the Forrest attemp to the list of All Forrest Attempts
@@ -496,12 +499,12 @@ public class ctrl : MonoBehaviour {
                 SetHighest();
                 SetGraphs();
                 attempt.x = -1;
-            startFatt.Clear();
+            	startFatt.Clear();
                 day++;
             }
             attempt.x++;
 
-            ForrestCTRL f = Instantiate(forrest).GetComponent<ForrestCTRL>();
+			ForrestCTRL f = Instantiate(forrest).GetComponent<ForrestCTRL>();
 
             // Set the position to be that of the starting sphere
             f.transform.position = new Vector3(startSp.transform.position.x, f.transform.position.y, startSp.transform.position.z);
@@ -512,11 +515,11 @@ public class ctrl : MonoBehaviour {
             // Set the brain to the corresponding attention ini data
             if (mode == GameMode.Train)
             {
-                f.SetBrain(attIniData[(int)attempt.x]);
+				f.SetBrain(brainConfig,attIniData[(int)attempt.x]);
             }
             else if (mode == GameMode.Test)
             {
-                f.SetBrain(attIniData[(int)attempt.x], mP.brains[(int)attempt.x].Split('\n')[0]);
+				f.SetBrain(brainConfig,attIniData[(int)attempt.x], mP.brains[(int)attempt.x].Split('\n')[0]);
             }
 
             allFatt.Add(f);
@@ -539,7 +542,7 @@ public class ctrl : MonoBehaviour {
             // loop through the num count & spawn a every Forrest attempt for that day
             for (int i = 0; i < num; i++)
             {
-                ForrestCTRL f = grabPast[i].GetComponent<ForrestCTRL>();
+				ForrestCTRL f = grabPast[i].GetComponent<ForrestCTRL>();
 
                 // Set the position to be that of the starting sphere
                 f.transform.position = new Vector3(startSp.transform.position.x, f.transform.position.y, startSp.transform.position.z);
@@ -548,7 +551,7 @@ public class ctrl : MonoBehaviour {
                 f.transform.eulerAngles = new Vector3(f.transform.eulerAngles.x, startSp.transform.eulerAngles.y, f.transform.eulerAngles.z);
 
                 // Set the brain to the corresponding attention ini data
-                f.SetBrain(attIniData[i]);
+				f.SetBrain(brainConfig,attIniData[i]);
 
                 // 
                 f.Reset();
@@ -580,7 +583,7 @@ public class ctrl : MonoBehaviour {
             }
             attempt.x++;
 
-            ForrestCTRL f = grabPast[(int)attempt.x].GetComponent<ForrestCTRL>();
+			ForrestCTRL f = grabPast[(int)attempt.x].GetComponent<ForrestCTRL>();
 
             // Set the position to be that of the starting sphere
             f.transform.position = new Vector3(startSp.transform.position.x, f.transform.position.y, startSp.transform.position.z);
@@ -591,11 +594,11 @@ public class ctrl : MonoBehaviour {
             // Set the brain to the corresponding attention ini data
             if (mode == GameMode.Train)
             {
-                f.SetBrain(attIniData[(int)attempt.x]);
+				f.SetBrain(brainConfig,attIniData[(int)attempt.x]);
             }
             else if (mode == GameMode.Test)
             {
-                f.SetBrain(attIniData[(int)attempt.x], mP.brains[(int)attempt.x].Split('\n')[0]);
+				f.SetBrain(brainConfig,attIniData[(int)attempt.x], mP.brains[(int)attempt.x].Split('\n')[0]);
             }
 
             allFatt.Add(f);
@@ -907,7 +910,7 @@ public class ctrl : MonoBehaviour {
             allNN.Add(pastAttempts[i].GetComponent<ForrestCTRL>().nn);
         }
 
-        NN[] parents= new NN[0];
+        //NN[] parents= new NN[0];
 
         // Get the sum of all fitness scores
 
