@@ -234,8 +234,9 @@ public class ForrestCTRL : MonoBehaviour {
     /// Set the Genetic Code for the attempt
     /// </summary>
     /// <param name="i"></param>
-    public void SetBrain(float[] i)
+    public void SetBrain(int[] brainConfig, float[] i)
     {
+		nn = new NN(brainConfig[0],brainConfig[1],brainConfig[2]);
         ini = i;
         nn.IniWeights(ini);
     }
@@ -244,10 +245,9 @@ public class ForrestCTRL : MonoBehaviour {
     /// Set the Genetic Code for the attempt with name
     /// </summary>
     /// <param name="i"></param>
-    public void SetBrain(float[] i, string n)
+	public void SetBrain(int[] brainConfig, float[] i, string n)
     {
-        ini = i;
-        nn.IniWeights(ini);
+		SetBrain(brainConfig, i);
         nn.SetName(n);
         myName = nn.name;
         gameObject.name = myName;
