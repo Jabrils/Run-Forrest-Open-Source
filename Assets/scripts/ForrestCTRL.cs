@@ -6,23 +6,23 @@ using NeuralNet;
 
 [RequireComponent(typeof(Rigidbody))]
 public class ForrestCTRL : MonoBehaviour {
-    ctrl C;
-    Rigidbody rb;
-    Collider col;
-    public NN nn = new NN(5,4);
+    protected ctrl C;
+    protected Rigidbody rb;
+    protected Collider col;
+    protected float[] ini;
+    protected bool menu;
+
+    public NN nn;
     public string myName;
     public float movement;
     public float fitness;
-    float[] ini;
     public bool ended, stLap;
     public Vector2 lap;
     public float[] inp;
     public string brain;
 
-    bool menu;
-
     // Use this for initialization
-    void Start() {
+	virtual protected void Start() {
         menu = SceneManager.GetActiveScene().name == "menu";
 
         if (!menu)
@@ -56,9 +56,12 @@ public class ForrestCTRL : MonoBehaviour {
     }
 
     // Update is called once per frame
-    void Update()
+    virtual protected void FixedUpdate()
     {
+		if(nn.inputs < 1) { Debug.Log("Forrest doesn't have a brain"); return; }
+
         brain = nn.ReadBrain();
+        float[] nnOutputs;
 
         // Rotate the charater based on Horizonal Input & later NN Output
         transform.rotation = Quaternion.Euler(transform.eulerAngles + Vector3.up * movement * 2.5f);
@@ -113,14 +116,15 @@ public class ForrestCTRL : MonoBehaviour {
         // Add to our fitness every frame
         fitness += (ended) ? 0 : inp2fit(inp);
 
+        nnOutputs = nn.CalculateNN(inp);
         // This sets the output text display to be the output of our NN
         if (!menu)
         {
-            movement = ended ? 0 : ((C.intelli == ctrl.IntelMode.Human) ? Input.GetAxis("Horizontal") : nn.CalculateNN(inp));
+            movement = ended ? 0 : ((C.intelli == ctrl.IntelMode.Human) ? Input.GetAxis("Horizontal") : nnOutputs[0]);
         }
         else
         {
-            movement = ended ? 0 : (nn.CalculateNN(inp));
+            movement = ended ? 0 : nnOutputs[0];
         }
 
         // 
@@ -173,7 +177,7 @@ public class ForrestCTRL : MonoBehaviour {
         }
     }
 
-    public void Reset()
+	virtual public void Reset()
     {
         fitness = 0;
         lap.x = 1;
@@ -189,7 +193,7 @@ public class ForrestCTRL : MonoBehaviour {
         }
     }
 
-    void CheckIfLast()
+    protected void CheckIfLast()
     {
         // Grab a ref to every Active Forrest
         GameObject[] f = GameObject.FindGameObjectsWithTag("Active");
@@ -219,7 +223,7 @@ public class ForrestCTRL : MonoBehaviour {
             r.material = Resources.Load<Material>("forrest_full 1");
         }
 
-        nn.SetFitness(fitness);
+		nn.SetFitness(fitness);
 
         // Remove self from All Forrest Attempts Controller Listings
         C.allFatt.Remove(this);
@@ -230,8 +234,9 @@ public class ForrestCTRL : MonoBehaviour {
     /// Set the Genetic Code for the attempt
     /// </summary>
     /// <param name="i"></param>
-    public void SetBrain(float[] i)
+    public void SetBrain(int[] brainConfig, float[] i)
     {
+		nn = new NN(brainConfig[0],brainConfig[1],brainConfig[2]);
         ini = i;
         nn.IniWeights(ini);
     }
@@ -240,10 +245,9 @@ public class ForrestCTRL : MonoBehaviour {
     /// Set the Genetic Code for the attempt with name
     /// </summary>
     /// <param name="i"></param>
-    public void SetBrain(float[] i, string n)
+	public void SetBrain(int[] brainConfig, float[] i, string n)
     {
-        ini = i;
-        nn.IniWeights(ini);
+		SetBrain(brainConfig, i);
         nn.SetName(n);
         myName = nn.name;
         gameObject.name = myName;
