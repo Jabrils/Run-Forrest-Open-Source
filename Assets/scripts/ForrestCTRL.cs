@@ -56,9 +56,12 @@ public class ForrestCTRL : MonoBehaviour {
     }
 
     // Update is called once per frame
-    void Update()
+    virtual protected void FixedUpdate()
     {
+		if(nn.inputs < 1) { Debug.Log("Forrest doesn't have a brain"); return; }
+
         brain = nn.ReadBrain();
+        float[] nnOutputs;
 
         // Rotate the charater based on Horizonal Input & later NN Output
         transform.rotation = Quaternion.Euler(transform.eulerAngles + Vector3.up * movement * 2.5f);
@@ -113,14 +116,15 @@ public class ForrestCTRL : MonoBehaviour {
         // Add to our fitness every frame
         fitness += (ended) ? 0 : inp2fit(inp);
 
+        nnOutputs = nn.CalculateNN(inp);
         // This sets the output text display to be the output of our NN
         if (!menu)
         {
-            movement = ended ? 0 : ((C.intelli == ctrl.IntelMode.Human) ? Input.GetAxis("Horizontal") : nn.CalculateNN(inp));
+            movement = ended ? 0 : ((C.intelli == ctrl.IntelMode.Human) ? Input.GetAxis("Horizontal") : nnOutputs[0]);
         }
         else
         {
-            movement = ended ? 0 : (nn.CalculateNN(inp));
+            movement = ended ? 0 : nnOutputs[0];
         }
 
         // 
