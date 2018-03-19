@@ -698,7 +698,7 @@ public class ctrl : MonoBehaviour {
         if (tF.fitness > highestFit.fitness)
         {
             // Create a new NN to store the highest brain from the training session
-            highestFit = new NN(tF.nn.inputs, tF.nn.hL);
+			highestFit = new NN(tF.nn.inputs, tF.nn.hL, tF.nn.outputs);
 
             // Set that fitness to the new record Forrest which is tF
             highestFit.SetFitness(tF.fitness);
@@ -1145,7 +1145,8 @@ public class ctrl : MonoBehaviour {
     void RandomizeAParentWeights(NN[] parents)
     {
         // set r that will hold a randomly generated brain
-        float[] r = new float[29];
+
+		float[] r = new float[parents[0].geneSize];
 
         // loop through & generate a brain
         for (int k = 0; k < r.Length; k++)
@@ -1168,8 +1169,8 @@ public class ctrl : MonoBehaviour {
     string GenerateOffspringBrain(NN[] parents)
     {
         // First create slice start & stop points
-        int start = Random.Range(0, 29);
-        int stop = Random.Range(start, 29);
+		int start = Random.Range(0, parents[0].geneSize);
+		int stop = Random.Range(start, parents[0].geneSize);
 
         // Then create the offspring brain string
         string offBrain = "";
@@ -1187,10 +1188,11 @@ public class ctrl : MonoBehaviour {
         }
 
         // Finally loop through the first selected parent values again from the end of the cut to the end of the brain sequence & add that to the offspring's brain
-        for (int i = stop; i < 29; i++)
+		int geneSize = parents[0].geneSize;
+		for (int i = stop; i < geneSize; i++)
         {
             // Checks for if at the end of loop or not for comma
-            bool com = i != 28;
+			bool com = i != (geneSize - 1);
 
             // The adding part
             offBrain += parents[0].ReadBrain().Split(',')[i] + (com ? "," : string.Empty);
