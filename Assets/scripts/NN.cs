@@ -13,12 +13,19 @@ namespace NeuralNet
         int _inputs;
         public int inputs { get { return _inputs; } }
         float[][] _hLw;
-        public int weightCount { get { return TotalWeightCount(); } }
         float[] _hLb;
-        float[] Ow;
-        float Ob;
+        int _outputs;
+        public int outputs { get { return _outputs; } }
+        float[][] Ow;
+        float[] Ob;
         float _fitness;
         public double fitness { get { return _fitness; } }
+        public int geneSize { get { return (_inputs * _hL.Length) + (_hL.Length) + (_hL.Length * _outputs) + Ob.Length; } }
+
+        public static int GetGeneSize(int inputs, int hiddenLayers, int outputs)
+        {
+            return (inputs * hiddenLayers) + hiddenLayers + (hiddenLayers * outputs) + outputs;
+        }
 
         /// <summary>
         /// Sometimes you just want access to variables like fitness & don't need to pass in node counts
@@ -33,11 +40,14 @@ namespace NeuralNet
         /// </summary>
         /// <param name="inpsNumb"></param>
         /// <param name="_hLNodes"></param>
-        public NN(int inpsNumb, int _hLNodes)
+        public NN(int inpsNumb, int _hLNodes, int outputs = 1)
         {
             _hL = new float[_hLNodes];
-            IniWeights(inpsNumb);
             _inputs = inpsNumb;
+            _outputs = outputs;
+            Ow = new float[outputs][];
+            Ob = new float[outputs];
+            IniWeights(inpsNumb);
         }
 
         /// <summary>
@@ -58,8 +68,12 @@ namespace NeuralNet
             // 
             _inputs = inps;
 
-            // 
-            Ow = new float[_hL.Length];
+            //
+            Ow = new float[_outputs][];
+            for(int i = 0; i < _outputs; i++) {
+                Ow[i] = new float[_hL.Length];
+            }
+            Ob = new float[Ow.Length];
 
             // Set a double nested array, [hidden layer length][input length]
             _hLw = new float[_hL.Length][];
@@ -72,13 +86,21 @@ namespace NeuralNet
             {
                 _hLw[i] = new float[inps];
                 _hLb[i] = 0;// r.Next(-cap, cap);
-                Ow[i] = 0;// r.Next(-cap, cap);
 
                 // 
                 for (int j = 0; j < _hLw[i].Length; j++)
                 {
                     _hLw[i][j] = 0;// r.Next(-cap, cap);
                 }
+            }
+
+            for(int i = 0; i < _outputs; i++)
+            {
+                for(int j = 0; j < _hL.Length; j++)
+                {
+                    Ow[i][j] = 0;
+                }
+                Ob[i] = 0;
             }
         }
 
@@ -88,6 +110,9 @@ namespace NeuralNet
         /// <param name="w"></param>
         public void IniWeights(float[] w)
         {
+            int outputWeightOffset = (inputs*_hL.Length)+_hLb.Length;
+            int outputBiasOffset = w.Length - Ob.Length;
+
             // Okay don't freak out from this code let's walk through it step by step.
 
             // first were going to run a for loop the length of the number of nodes in our Hidden Layer
@@ -99,17 +124,22 @@ namespace NeuralNet
                 for (int j = 0; j < _hLw[i].Length; j++)
                 {
                     // this is exactly what I described above but in math form
-                    _hLw[i][j] = w[j + (i * 6)];
+                    _hLw[i][j] = w[j + (i * (inputs+1))];
                 }
 
                 // then we're going to map all the biases for ALL nodes in the Hidden Layer, as described above but in math form
-                _hLb[i] = w[5 + (i * 6)];
-
+                _hLb[i] = w[inputs + (i * (inputs+1))];
+            }
+            for(int i = 0; i < _outputs; i++) {
                 // Then we're going to map all of the Output weights, as described above but in math form
-                Ow[i] = w[i + 24];
+                for(int j = 0; j < _hL.Length; j++) {
+                    Ow[i][j] = w[j + (i * _hL.Length) + outputWeightOffset];
+                }
+            }
 
+            for(int i = 0; i < Ob.Length; i++) {
                 // & lastly the Output bias is the last on the input w sequence & we're done!
-                Ob = w[w.Length - 1];
+                Ob[i] = w[w.Length - outputBiasOffset + i];
             }
         }
 
@@ -119,36 +149,13 @@ namespace NeuralNet
         /// <param name="w"></param>
         public void IniWeights(string inp)
         {
-            float[] w = new float[weightCount];
-
+            float[] w = new float[geneSize];
+            string[] splitWeights = inp.Split(',');
             for (int i = 0; i < w.Length; i++)
             {
-                w[i] = float.Parse(inp.Split(',')[i]);
+                w[i] = float.Parse(splitWeights[i]);
             }
-
-            // Okay don't freak out from this code let's walk through it step by step.
-
-            // first were going to run a for loop the length of the number of nodes in our Hidden Layer
-            for (int i = 0; i < _hLw.Length; i++)
-            {
-                // then we're going to map all of the hidden layer weights from our float vector input w
-                // & because I encode the input vector w as all _hL[0] weights then _hL[0] bias, then _hL[1] weight -> _hL[1] bias
-                // all the way to it's length, then do all Output weights, then Output bias, I am going to map my Neural Net accordingly 
-                for (int j = 0; j < _hLw[i].Length; j++)
-                {
-                    // this is exactly what I described above but in math form
-                    _hLw[i][j] = w[j + (i * 6)];
-                }
-
-                // then we're going to map all the biases for ALL nodes in the Hidden Layer, as described above but in math form
-                _hLb[i] = w[5 + (i * 6)];
-
-                // Then we're going to map all of the Output weights, as described above but in math form
-                Ow[i] = w[i + 24];
-
-                // & lastly the Output bias is the last on the input w sequence & we're done!
-                Ob = w[w.Length - 1];
-            }
+            IniWeights(w);
         }
 
         /// <summary>
@@ -156,18 +163,23 @@ namespace NeuralNet
         /// </summary>
         /// <param name="inps"></param>
         /// <returns></returns>
-        public float CalculateNN(float[] inps)
+        public float[] CalculateNN(float[] inps)
         {
+            float[] Outputs = new float[_outputs];
             // Set the value of all hidden layer outputs
             for (int i = 0; i < _hL.Length; i++)
             {
                 _hL[i] = ReLU(Sum(inps, _hLw[i]) + _hLb[i]);
             }
 
-            float O = SoftSign(Sum(Ow, _hL) + Ob);
+            for(int i = 0; i < _outputs; i++) {
+                Outputs[i] = SoftSign(Sum(Ow[i], _hL) + Ob[i]);
+            }
+                //float O = SoftSign(Sum(Ow, _hL) + Ob);
             //float O = ACTIVATION(Sum(Ow, _hL) + Ob);
 
-            return O;
+            //return O;
+            return Outputs;
         }
 
         /// <summary>
@@ -223,12 +235,17 @@ namespace NeuralNet
 
             for (int i = 0; i < Ow.Length; i++)
             {
-                dna += Ow[i] + ",";
+                for (int j = 0; j < _hL.Length; j++) {
+                    dna += Ow[i][j] + ",";
+                }
             }
 
-            dna += Ob;
+            for (int i = 0; i < Ob.Length; i++)
+            {
+                dna += Ob[i] + ",";
+            }
 
-            return dna;
+            return dna.TrimEnd(',');
         }
 
         /// <summary>
@@ -247,15 +264,6 @@ namespace NeuralNet
             }
 
             return ret;
-        }
-
-        /// <summary>
-        /// Returns the total weight count
-        /// </summary>
-        /// <returns></returns>
-        int TotalWeightCount()
-        {
-            return (_hLw[0].Length * _inputs) + Ow.Length;
         }
 
         /// <summary>
